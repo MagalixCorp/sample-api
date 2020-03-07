@@ -18,3 +18,11 @@ spec:
             - image: magalixcorp/sample-api:v1
               imagePullPolicy: IfNotPresent
               name: frontend
+              volumeMounts:
+              - name: config-volume
+                mountPath: /app/config.json
+                subPath: config.json
+            volumes:
+                - name: config-volume
+                  configMap:
+                    name: app-config

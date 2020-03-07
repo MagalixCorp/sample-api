@@ -6,6 +6,8 @@ services:
       - "3000:3000"
     environment: 
         REDIS_PASSWORD: password123
+    volumes:
+    - "$PWD/config.json:/app/config.json"
   redis:
     image: "bitnami/redis:latest"
     environment: 

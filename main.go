@@ -39,7 +39,6 @@ func setEnv() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Println(configuration)
 	if redisHost = os.Getenv("REDIS_HOST"); redisHost == "" {
 		if redisHost = configuration.RedisHost; redisHost == "" {
 			redisHost = "localhost"
