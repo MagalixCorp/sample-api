@@ -15,11 +15,10 @@ var redisHost string
 var redisPort string
 var redisPassword string
 
-const redisKey = "msg-key"
-
 //PostData a struct for holding the the data sent in the request
 type PostData struct {
-	Message string `json:"message"`
+	Username string `json:"username"`
+	Message  string `json:"message"`
 }
 
 func setEnv() {
@@ -54,45 +53,27 @@ func handlePost(w http.ResponseWriter, r *http.Request) {
 	}
 	var newData PostData
 	json.Unmarshal(b, &newData)
-	data := getData()
-	data = append(data, newData)
-	jsonData, err := json.Marshal(data)
+	username := newData.Username
+	message := newData.Message
 	if err != nil {
 		log.Println("Error while marhsalling the data:", err)
 	}
 	pool := newPool(true)
 	conn := pool.Get()
 	defer conn.Close()
-	err = set(conn, string(jsonData))
+	err = set(conn, username, message)
 	if err != nil {
 		log.Println("Error while saving record to Redis:", err)
 	}
 	w.WriteHeader(204)
 }
 
-func getData() []PostData {
-	var pd []PostData
-	pd = make([]PostData, 0)
+func handleQuery(w http.ResponseWriter, r *http.Request) {
 	pool := newPool(false)
 	conn := pool.Get()
 	defer conn.Close()
 	content, _ := get(conn)
-	if content != "" {
-		err := json.Unmarshal([]byte(content), &pd)
-		if err != nil {
-			log.Println(err)
-		}
-	}
-	return pd
-}
-
-func handleQuery(w http.ResponseWriter, r *http.Request) {
-	data := getData()
-	result := []string{}
-	for _, msg := range data {
-		result = append(result, msg.Message)
-	}
-	json.NewEncoder(w).Encode(result)
+	json.NewEncoder(w).Encode(content)
 }
 
 func respondWithError(w http.ResponseWriter, msg string, status int) {
@@ -121,12 +102,12 @@ func newPool(write bool) *redis.Pool {
 		},
 	}
 }
-func set(c redis.Conn, value string) error {
+func set(c redis.Conn, key string, value string) error {
 	_, err := c.Do("AUTH", redisPassword)
 	if err != nil {
 		log.Println("Could not authenticate to Redis", err)
 	}
-	_, err = c.Do("SET", redisKey, value)
+	_, err = c.Do("SET", key, value)
 	if err != nil {
 		return err
 	}
@@ -134,16 +115,22 @@ func set(c redis.Conn, value string) error {
 }
 
 // get executes the redis GET command
-func get(c redis.Conn) (string, error) {
+func get(c redis.Conn) ([]PostData, error) {
+	results := []PostData{}
 	_, err := c.Do("AUTH", redisPassword)
 	if err != nil {
 		log.Println("Could not authenticate to Redis", err)
 	}
-	s, err := redis.String(c.Do("GET", redisKey))
+	keys, err := redis.Strings(c.Do("KEYS", "*"))
 	if err != nil {
-		return "", err
+		return results, err
 	}
-	return s, nil
+	for _, k := range keys {
+		if v, err := redis.String(c.Do("GET", k)); err == nil {
+			results = append(results, PostData{k, v})
+		}
+	}
+	return results, nil
 }
 
 func commonMiddleware(next http.Handler) http.Handler {
