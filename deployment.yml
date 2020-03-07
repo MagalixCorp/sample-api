@@ -18,6 +18,12 @@ spec:
             - image: magalixcorp/sample-api:v1
               imagePullPolicy: IfNotPresent
               name: frontend
+              env:
+              - name: REDIS_PASSWORD
+                valueFrom:
+                    secretKeyRef:
+                        name: redis-password
+                        key: redis-password
               volumeMounts:
               - name: config-volume
                 mountPath: /app/config.json
