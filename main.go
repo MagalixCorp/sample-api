@@ -76,26 +76,27 @@ func handlePost(w http.ResponseWriter, r *http.Request) {
 
 func getData() []PostData {
 	var pd []PostData
+	pd = make([]PostData, 0)
 	pool := newPool(false)
 	conn := pool.Get()
 	defer conn.Close()
 	content, _ := get(conn)
-	err := json.Unmarshal([]byte(content), &pd)
-	if err != nil {
-		log.Println(err)
+	if content != "" {
+		err := json.Unmarshal([]byte(content), &pd)
+		if err != nil {
+			log.Println(err)
+		}
 	}
 	return pd
 }
 
 func handleQuery(w http.ResponseWriter, r *http.Request) {
 	data := getData()
-	// data, err := json.Marshal(getData())
-	// if err != nil {
-	json.NewEncoder(w).Encode(data)
-	// } else {
-	// 	log.Println(err)
-	// 	respondWithError(w, "An error occured", 500)
-	// }
+	result := []string{}
+	for _, msg := range data {
+		result = append(result, msg.Message)
+	}
+	json.NewEncoder(w).Encode(result)
 }
 
 func respondWithError(w http.ResponseWriter, msg string, status int) {
@@ -150,7 +151,6 @@ func get(c redis.Conn) (string, error) {
 	}
 	s, err := redis.String(c.Do("GET", redisKey))
 	if err != nil {
-		log.Println(err)
 		return "", err
 	}
 	return s, nil
