@@ -21,12 +21,34 @@ type PostData struct {
 	Message  string `json:"message"`
 }
 
+//Configuration is a struct for holding the application configuration data read from a JSON file
+type Configuration struct {
+	RedisHost string
+	RedisPort string
+}
+
 func setEnv() {
+	//filename is the path to the json config file
+	file, err := os.Open("config.json")
+	if err != nil {
+		log.Fatal(err)
+	}
+	decoder := json.NewDecoder(file)
+	var configuration Configuration
+	err = decoder.Decode(&configuration)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Println(configuration)
 	if redisHost = os.Getenv("REDIS_HOST"); redisHost == "" {
-		redisHost = "localhost"
+		if redisHost = configuration.RedisHost; redisHost == "" {
+			redisHost = "localhost"
+		}
 	}
 	if redisPort = os.Getenv("REDIS_PORT"); redisPort == "" {
-		redisPort = "6379"
+		if redisPort = configuration.RedisPort; redisPort == "" {
+			redisPort = "6379"
+		}
 	}
 	redisPassword = os.Getenv("REDIS_PASSWORD")
 }
