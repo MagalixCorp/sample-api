@@ -11,8 +11,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-var redisHostWrite string
-var redisHostRead string
+var redisHost string
 var redisPort string
 var redisPassword string
 
@@ -24,11 +23,8 @@ type PostData struct {
 }
 
 func setEnv() {
-	if redisHostWrite = os.Getenv("REDIS_MASTER_HOST"); redisHostWrite == "" {
-		redisHostWrite = "localhost"
-	}
-	if redisHostRead = os.Getenv("REDIS_SLAVE_HOST"); redisHostRead == "" {
-		redisHostRead = "localhost"
+	if redisHost = os.Getenv("REDIS_HOST"); redisHost == "" {
+		redisHost = "localhost"
 	}
 	if redisPort = os.Getenv("REDIS_PORT"); redisPort == "" {
 		redisPort = "6379"
@@ -107,12 +103,6 @@ func respondWithError(w http.ResponseWriter, msg string, status int) {
 func newPool(write bool) *redis.Pool {
 	// We need to set the Redis connection settings for testing functions individually (not passing through main() function)
 	setEnv()
-	var redisHost string
-	if write {
-		redisHost = redisHostWrite
-	} else {
-		redisHost = redisHostRead
-	}
 	return &redis.Pool{
 		// Maximum number of idle connections in the pool.
 		MaxIdle: 80,
