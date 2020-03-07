@@ -1,0 +1,20 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+    labels:
+        app: frontend
+    name: frontend
+spec:
+    replicas: 2
+    selector:
+        matchLabels:
+            app: frontend
+    template:
+        metadata:
+            labels:
+                app: frontend
+        spec:
+            containers:
+            - image: magalixcorp/sample-api:v1
+              imagePullPolicy: IfNotPresent
+              name: frontend
