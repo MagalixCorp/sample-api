@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/gomodule/redigo/redis"
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
 
@@ -64,7 +65,8 @@ func main() {
 	setEnv()
 	var router = newServer()
 	log.Println("Server starting on port 3000")
-	log.Fatal("Application is running", http.ListenAndServe(":3000", router))
+	// log.Fatal("Application is running", http.ListenAndServe(":3000", router))
+	log.Fatal(http.ListenAndServe(":3000", handlers.CORS(handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type", "Authorization"}), handlers.AllowedMethods([]string{"GET", "POST", "PUT", "HEAD", "OPTIONS"}), handlers.AllowedOrigins([]string{"*"}))(router)))
 }
 
 func handlePost(w http.ResponseWriter, r *http.Request) {
